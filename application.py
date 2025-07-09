@@ -21,6 +21,28 @@ def predict_datapoint():
             Region = 1  # Default value for Region
             new_data_scaled=standard_scaler.transform([[Temperature,RH,Ws,Rain,FFMC,DMC,ISI,Classes,Region]])
             result=ridge_model.predict(new_data_scaled)
+            # Store data in PostgreSQL via PHP backend
+            import requests
+            payload = {
+                "Temperature": Temperature,
+                "RH": RH,
+                "Ws": Ws,
+                "Rain": Rain,
+                "FFMC": FFMC,
+                "DMC": DMC,
+                "ISI": ISI,
+                "Classes": Classes,
+                "Region": Region,
+                "FWI": round(result[0], 2)
+            }
+            try:
+                requests.post(
+    "http://localhost:8000/store_form_data.php",
+    json=payload,
+    timeout=3
+)
+            except Exception:
+                pass  # Ignore storage errors for user experience
             return render_template('home.html',results=round(result[0], 2))
         except (ValueError, TypeError):
             error_message = "Please enter valid numeric values for all fields."
